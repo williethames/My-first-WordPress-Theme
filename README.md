@@ -6,10 +6,16 @@ This project is a custom WordPress theme developed for a fictional university we
 
 ### Custom REST API Endpoints
 
-- **Author Name:** Adds an `authorName` field to the REST API for posts, returning the author's name.
-- **User Note Count:** Adds a `userNoteCount` field to the REST API for notes, returning the count of notes for the current user.
+Generates custom fields for the REST API.
 
 ```php
+/**
+ * Registers custom REST API fields.
+ *
+ * Adds 'authorName' to the REST API for posts and 'userNoteCount' for notes.
+ *
+ * @return void
+ */
 function university_custom_rest() {
     register_rest_field(
         'post',
@@ -32,11 +38,16 @@ function university_custom_rest() {
 }
 
 add_action('rest_api_init', 'university_custom_rest');
-Dynamic Page Banners
+```
+### Dynamic Page Banners
 Generates a customizable page banner with a title, subtitle, and background image.
-
-php
-
+```php
+/**
+ * Generates a customizable page banner with a title, subtitle, and background image.
+ *
+ * @param array|null $args Optional. Arguments for the banner. Default is null.
+ * @return void
+ */
 function pageBanner($args = NULL) {
     if (!$args['title']) {
         $args['title'] = get_the_title();
@@ -45,7 +56,7 @@ function pageBanner($args = NULL) {
         $args['subtitle'] = get_field('page_banner_subtitle');
     }
     if (!$args['photo']) {
-        if (get_field('page_banner_background_image') and !is_archive() and !is_home()) {
+        if (get_field('page_banner_background_image') && !is_archive() && !is_home()) {
             $args['photo'] = get_field('page_banner_background_image')['sizes']['pageBanner'];
         } else {
             $args['photo'] = get_theme_file_uri('/images/ocean.jpg');
@@ -63,11 +74,15 @@ function pageBanner($args = NULL) {
     </div>
     <?php
 }
-Enqueueing Scripts and Styles
-Enqueues JavaScript and CSS files required for the theme.
-
-php
-
+```
+### Enqueueing Scripts and Styles
+Enqueues JavaScript and CSS files are required for the theme.
+```php
+/**
+ * Enqueues JavaScript and CSS files for the theme.
+ *
+ * @return void
+ */
 function university_files() {
     wp_enqueue_script('googleMap', 'https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY', NULL, '1.0', true);
     wp_enqueue_script('main-university-js', get_theme_file_uri('/build/index.js'), array('jquery'), '1.0', true);
@@ -82,11 +97,16 @@ function university_files() {
 }
 
 add_action('wp_enqueue_scripts', 'university_files');
-Theme Support and Image Sizes
+
+```
+### Theme Support and Image Sizes
 Adds theme support for various features and defines custom image sizes.
-
-php
-
+```php
+/**
+ * Adds theme support for various features and defines custom image sizes.
+ *
+ * @return void
+ */
 function university_features() {
     add_theme_support('title-tag');
     add_theme_support('post-thumbnails');
@@ -96,22 +116,29 @@ function university_features() {
 }
 
 add_action('after_setup_theme', 'university_features');
-Query Adjustments
+
+```
+### Query Adjustments
 Customizes the main queries for specific post type archives.
 
-php
-
+```php
+/**
+ * Customizes the main queries for specific post type archives.
+ *
+ * @param WP_Query $query The query object.
+ * @return void
+ */
 function university_adjust_queries($query) {
-    if (!is_admin() and is_post_type_archive('program') and $query->is_main_query()) {
+    if (!is_admin() && is_post_type_archive('program') && $query->is_main_query()) {
         $query->set('orderby', 'title');
         $query->set('order', 'ASC');
         $query->set('posts_per_page', -1);
     }
 
-    if (!is_admin() and is_post_type_archive('event') and $query->is_main_query()) {
+    if (!is_admin() && is_post_type_archive('event') && $query->is_main_query()) {
         $today = date('Ymd');
         $query->set('meta_key', 'event_date');
-        $query->set('orderBy', 'meta_value_num');
+        $query->set('orderby', 'meta_value_num');
         $query->set('order', 'ASC');
         $query->set('meta_query', array(
             array(
@@ -125,25 +152,36 @@ function university_adjust_queries($query) {
 }
 
 add_action('pre_get_posts', 'university_adjust_queries');
-Google Map API Key
+```
+### Google Map API Key
 Adds the Google Maps API key for ACF (Advanced Custom Fields) Google Map integration.
 
-php
-
+```php
+/**
+ * Adds the Google Maps API key for ACF Google Map integration.
+ *
+ * @param array $api The API settings array.
+ * @return array
+ */
 function universityMapKey($api) {
     $api['key'] = 'YOUR_API_KEY';
     return $api;
 }
 
 add_filter('acf/fields/google_map/api', 'universityMapKey');
-Subscriber Redirection and Admin Bar
+
+```
+### Subscriber Redirection and Admin Bar
 Redirects subscribers from the admin dashboard to the homepage and hides the admin bar for subscribers.
-
-php
-
+```php
+/**
+ * Redirects subscribers from the admin dashboard to the homepage.
+ *
+ * @return void
+ */
 function redirectSubsToFrontend() {
     $ourCurrentUser = wp_get_current_user();
-    if (count($ourCurrentUser->roles) == 1 and $ourCurrentUser->roles[0] == 'subscriber') {
+    if (count($ourCurrentUser->roles) == 1 && $ourCurrentUser->roles[0] == 'subscriber') {
         wp_redirect(site_url('/'));
         exit();
     }
@@ -151,25 +189,41 @@ function redirectSubsToFrontend() {
 
 add_action('admin_init', 'redirectSubsToFrontend');
 
+/**
+ * Hides the admin bar for subscribers.
+ *
+ * @return void
+ */
 function noSubsAdminBar() {
     $ourCurrentUser = wp_get_current_user();
-    if (count($ourCurrentUser->roles) == 1 and $ourCurrentUser->roles[0] == 'subscriber') {
+    if (count($ourCurrentUser->roles) == 1 && $ourCurrentUser->roles[0] == 'subscriber') {
         show_admin_bar(false);
+        exit();
     }
 }
 
-add_action('wp_loaded', 'noSubsAdminBar');
-Custom Login Screen
+add_action('admin_init', 'noSubsAdminBar');
+```
+### Custom Login Screen
 Customizes the login screen URL, styles, and title.
 
-php
-
+```php
+/**
+ * Customizes the login screen URL.
+ *
+ * @return string
+ */
 function ourHeaderUrl() {
     return esc_url(site_url('/'));
 }
 
 add_filter('login_headerurl', 'ourHeaderUrl');
 
+/**
+ * Enqueues custom styles for the login screen.
+ *
+ * @return void
+ */
 function ourLoginCSS() {
     wp_enqueue_style('custom-google-fonts', '//fonts.googleapis.com/css?family=Roboto+Condensed:300,300i,400,400i,700,700i|Roboto:100,300,400,400i,700,700i');
     wp_enqueue_style('font-awesome', '//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css');
@@ -179,19 +233,31 @@ function ourLoginCSS() {
 
 add_action('login_enqueue_scripts', 'ourLoginCSS');
 
+/**
+ * Customizes the login screen title.
+ *
+ * @return string
+ */
 function ourLoginTitle() {
     return get_bloginfo('name');
 }
 
 add_filter('login_headertitle', 'ourLoginTitle');
-Private Note Posts
+```
+### Private Note Posts
 Ensures that note posts are private and limits the number of notes a user can create.
 
-php
-
+```php
+/**
+ * Ensures that note posts are private and limits the number of notes a user can create.
+ *
+ * @param array $data Post data.
+ * @param array $postarr Post array.
+ * @return array Modified post data.
+ */
 function makeNotePrivate($data, $postarr) {
     if ($data['post_type'] == 'note') {
-        if (count_user_posts(get_current_user_id(), 'note') > 1000 and !$postarr['ID']) {
+        if (count_user_posts(get_current_user_id(), 'note') > 1000 && !$postarr['ID']) {
             die("You have reached your note limit.");
         }
 
@@ -199,7 +265,7 @@ function makeNotePrivate($data, $postarr) {
         $data['post_title'] = sanitize_text_field($data['post_title']);
     }
 
-    if ($data['post_type'] == 'note' and $data['post_status'] != 'trash') {
+    if ($data['post_type'] == 'note' && $data['post_status'] != 'trash') {
         $data['post_status'] = "private";
     }
 
@@ -207,17 +273,11 @@ function makeNotePrivate($data, $postarr) {
 }
 
 add_filter('wp_insert_post_data', 'makeNotePrivate', 10, 2);
-Installation
+``
+```
+## Installation
 Clone the repository to your WordPress themes directory.
+
 Activate the theme from the WordPress admin dashboard.
+
 Customize the theme settings as needed.
-License
-This project is licensed under the MIT License.
-
-
-To edit this file:
-
-1. **Copy the content** of the README file provided above.
-2. **Go to the README file** in your GitHub repository as mentioned in the steps.
-3. **Paste the new content** into the text editor.
-4. **Commit the changes** by scrolling down to the "Commit changes" section, entering a commit message (e.g., "Updated README"), and clicking the "Commit changes" button.
